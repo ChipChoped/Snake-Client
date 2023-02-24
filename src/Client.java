@@ -1,5 +1,9 @@
+import view.ViewGameMenu;
+import view.ViewLogIn;
+
 import java.net.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class Client extends Thread {
@@ -24,6 +28,9 @@ public class Client extends Thread {
 
     public void run() {
         try {
+            ViewLogIn viewLogIn = new ViewLogIn(socket);
+            // ViewGameMenu viewGameMenu = new ViewGameMenu();
+
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintStream out = new PrintStream(socket.getOutputStream());
 
