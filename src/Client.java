@@ -12,8 +12,9 @@ public class Client extends Thread {
 
     public static void main(String[] args) {
         try {
-            InetAddress serveur = InetAddress.getByName(args[0]);
-            Socket socket = new Socket(serveur, port);
+            // InetAddress serveur = InetAddress.getByName(args[0]);
+            InetAddress serveur = InetAddress.getLocalHost();
+            Socket socket = new Socket(serveur.getHostAddress(), port);
 
             Client client = new Client(socket);
             client.start();
@@ -29,7 +30,6 @@ public class Client extends Thread {
     public void run() {
         try {
             ViewLogIn viewLogIn = new ViewLogIn(socket);
-            // ViewGameMenu viewGameMenu = new ViewGameMenu();
 
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintStream out = new PrintStream(socket.getOutputStream());
