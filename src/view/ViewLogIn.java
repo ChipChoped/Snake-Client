@@ -52,7 +52,7 @@ public class ViewLogIn {
                     if (jsonResponse.get("type").equals("id")) {
                         User user = new User(jsonResponse.getInt("id"), usernameTextField.getText());
                         frame.dispose();
-                        ViewGameMenu viewGameMenu = new ViewGameMenu(user);
+                        ViewMenu viewMenu = new ViewMenu(socket, user);
                     }
                     else if (jsonResponse.get("type").equals("error")) {
                         errorLabel.setText((String) jsonResponse.get("message"));
