@@ -17,7 +17,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 
-import static functions.LogIn.logIn;
+import static functions.Logs.logIn;
+import static functions.Logs.logOut;
 
 public class ViewMenu {
     public ViewMenu(Socket socket, User user) {
@@ -41,6 +42,7 @@ public class ViewMenu {
         bottomPanel.setLayout(new GridLayout(1, 3));
 
         JLabel userLabel = new JLabel("Welcome " + user.username() + "!", JLabel.CENTER);
+        JLabel errorLabel = new JLabel();
         JButton profileButton = new JButton("Profile \u0004");
         JButton logOutButton = new JButton("Log out");
         JButton playButton = new JButton("Play!");
@@ -49,12 +51,20 @@ public class ViewMenu {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 String url = "http://localhost:8080/Snake/user/" + user.username();
-                Runtime runtime = Runtime.getRuntime();
+
+                Desktop desktop = Desktop.getDesktop();
 
                 try {
-                    runtime.exec("xdg-open " + url);
-                } catch (IOException e) {
+                    desktop.browse(new URI(url));
+                } catch (IOException | URISyntaxException e) {
                     e.printStackTrace();
+                    Runtime runtime = Runtime.getRuntime();
+
+                    try {
+                        runtime.exec("xdg-open " + url);
+                    } catch (IOException e_) {
+                        e_.printStackTrace();
+                    }
                 }
             }
         });
@@ -62,21 +72,20 @@ public class ViewMenu {
         logOutButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                /*try {
-                    JSONObject jsonResponse = logIn(socket, usernameTextField.getText(), String.valueOf(passwordField.getPassword()));
+                try {
+                    JSONObject jsonResponse = logOut(socket, user.ID());
 
-                    if (jsonResponse.get("type").equals("id")) {
-                        User user = new User(jsonResponse.getInt("id"), usernameTextField.getText());
+                    if (jsonResponse.get("type").equals("return-log-out")) {
                         frame.dispose();
-                        ViewGameMenu viewGameMenu = new ViewGameMenu(user);
+                        ViewLogIn viewLogIn = new ViewLogIn(socket);
                     }
                     else if (jsonResponse.get("type").equals("error")) {
                         errorLabel.setText((String) jsonResponse.get("message"));
                         errorLabel.setForeground(Color.red);
                     }
-                } catch (IOException | NoSuchAlgorithmException e) {
+                } catch (IOException e) {
                     throw new RuntimeException(e);
-                }*/
+                }
             }
         });
 
@@ -93,6 +102,7 @@ public class ViewMenu {
         });
 
         topPanel.add(userLabel);
+        topPanel.add(errorLabel);
 
         bottomPanel.add(profileButton);
         bottomPanel.add(logOutButton);

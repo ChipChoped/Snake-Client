@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 
-import static functions.LogIn.logIn;
+import static functions.Logs.logIn;
 
 public class ViewLogIn {
     public ViewLogIn(Socket socket) {
@@ -49,7 +49,7 @@ public class ViewLogIn {
                 try {
                     JSONObject jsonResponse = logIn(socket, usernameTextField.getText(), String.valueOf(passwordField.getPassword()));
 
-                    if (jsonResponse.get("type").equals("id")) {
+                    if (jsonResponse.get("type").equals("return-log-in")) {
                         User user = new User(jsonResponse.getInt("id"), usernameTextField.getText());
                         frame.dispose();
                         ViewMenu viewMenu = new ViewMenu(socket, user);
