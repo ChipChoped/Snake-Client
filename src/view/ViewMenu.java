@@ -80,29 +80,17 @@ public class ViewMenu {
             }
         });
 
-        /*playButton.addActionListener(new ActionListener() {
+        playButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
-                Strategy chosenStrategy = null;
-
-                switch (chosenMode) {
-                    case MANUAL:
-                        chosenStrategy = new InteractiveStrategy();
-                        break;
-                    case RANDOM:
-                        chosenStrategy = new RandomStrategy();
-                }
-
-                numberOfTurns = Integer.parseInt(turnField.getText());
-
                 frame.dispose();
 
                 try {
-                    ControllerSnakeGame controller = new ControllerSnakeGame(numberOfTurns, chosenStrategy, chosenMapPath);
+                    ControllerSnakeGame controller = new ControllerSnakeGame(500, new InteractiveStrategy(), System.getProperty("user.dir") + "/layout/arenaNoWall.lay");
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
-        });*/
+        });
 
         topPanel.add(userLabel);
 
