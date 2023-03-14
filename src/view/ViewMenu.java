@@ -52,17 +52,16 @@ public class ViewMenu {
             public void actionPerformed(ActionEvent actionEvent) {
                 String url = "http://localhost:8080/Snake/user/" + user.username();
 
-                Desktop desktop = Desktop.getDesktop();
 
                 try {
+                    Desktop desktop = Desktop.getDesktop();
                     desktop.browse(new URI(url));
-                } catch (IOException | URISyntaxException e) {
-                    e.printStackTrace();
-                    Runtime runtime = Runtime.getRuntime();
-
+                } catch (IOException | URISyntaxException | UnsupportedOperationException e) {
                     try {
+                        Runtime runtime = Runtime.getRuntime();
                         runtime.exec("xdg-open " + url);
                     } catch (IOException e_) {
+                        e.printStackTrace();
                         e_.printStackTrace();
                     }
                 }
