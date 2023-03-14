@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 
 @SuppressWarnings("unchecked")
-public class Logs {
+public class Request {
     public static JSONObject logIn(Socket socket, String username, String password) throws IOException, NoSuchAlgorithmException {
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintStream out = new PrintStream(socket.getOutputStream());
@@ -52,5 +52,14 @@ public class Logs {
         }
 
         return jsonResponse;
+    }
+
+    public static void disconnect(Socket socket) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintStream out = new PrintStream(socket.getOutputStream());
+
+        JSONObject jsonRequest = new JSONObject();
+        jsonRequest.put("type", "disconnect");
+        out.println(jsonRequest);
     }
 }

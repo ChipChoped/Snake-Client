@@ -7,11 +7,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 
-import static functions.Logs.logIn;
+import static functions.Request.disconnect;
+import static functions.Request.logIn;
 
 public class ViewLogIn {
     public ViewLogIn(Socket socket) {
@@ -59,6 +62,16 @@ public class ViewLogIn {
                         errorLabel.setForeground(Color.red);
                     }
                 } catch (IOException | NoSuchAlgorithmException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                try {
+                    disconnect(socket);
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }

@@ -3,22 +3,21 @@ package view;
 import controllers.ControllerSnakeGame;
 import org.json.JSONObject;
 import strategies.InteractiveStrategy;
-import strategies.RandomStrategy;
-import strategies.Strategy;
 import utils.User;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
 
-import static functions.Logs.logIn;
-import static functions.Logs.logOut;
+import static functions.Request.disconnect;
+import static functions.Request.logOut;
 
 public class ViewMenu {
     public ViewMenu(Socket socket, User user) {
@@ -95,6 +94,17 @@ public class ViewMenu {
                 try {
                     ControllerSnakeGame controller = new ControllerSnakeGame(500, new InteractiveStrategy(), System.getProperty("user.dir") + "/layout/arenaNoWall.lay");
                 } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                try {
+                    logOut(socket, user.ID());
+                    disconnect(socket);
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
