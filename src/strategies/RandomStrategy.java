@@ -24,16 +24,16 @@ public class RandomStrategy implements Strategy {
             else {
                 switch (rand.nextInt(4)) {
                     case 0:
-                        eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game.getSnakes().get(i), AgentAction.MOVE_UP, otherSnakes, game.getItems(), game.getSizeX(), game.getSizeY(), game.getWithWalls());
+                        eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game, game.getSnakes().get(i), AgentAction.MOVE_UP, otherSnakes);
                         break;
                     case 1:
-                        eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game.getSnakes().get(i), AgentAction.MOVE_DOWN, otherSnakes, game.getItems(), game.getSizeX(), game.getSizeY(), game.getWithWalls());
+                        eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game, game.getSnakes().get(i), AgentAction.MOVE_DOWN, otherSnakes);
                         break;
                     case 2:
-                        eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game.getSnakes().get(i), AgentAction.MOVE_LEFT, otherSnakes, game.getItems(), game.getSizeX(), game.getSizeY(), game.getWithWalls());
+                        eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game, game.getSnakes().get(i), AgentAction.MOVE_LEFT, otherSnakes);
                         break;
                     case 3:
-                        eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game.getSnakes().get(i), AgentAction.MOVE_RIGHT, otherSnakes, game.getItems(), game.getSizeX(), game.getSizeY(), game.getWithWalls());
+                        eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game, game.getSnakes().get(i), AgentAction.MOVE_RIGHT, otherSnakes);
                         break;
                 }
 

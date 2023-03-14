@@ -25,7 +25,7 @@ public class InteractiveStrategy implements Strategy {
             if (eleminatedSnakes.contains(game.getSnakes().get(i)))
                 i++;
             else {
-                eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game.getSnakes().get(i), game.getNextMoves().get(i), otherSnakes, game.getItems(), game.getSizeX(), game.getSizeY(), game.getWithWalls());
+                eliminated = !game.getSnakes().get(i).getBehavior().moveAgent(game, game.getSnakes().get(i), game.getNextMoves().get(i), otherSnakes);
 
                 ArrayList<Snake> difference = new ArrayList<>(game.getSnakes());
                 difference.removeAll(otherSnakes);

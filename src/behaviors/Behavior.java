@@ -1,5 +1,6 @@
 package behaviors;
 
+import model.SnakeGame;
 import utils.*;
 
 import java.util.ArrayList;
@@ -26,9 +27,9 @@ public abstract class Behavior {
                 (action == AgentAction.MOVE_RIGHT && snake.getLastAction() != AgentAction.MOVE_LEFT));
     }
 
-    protected boolean isEliminated(Snake snake, Position position, ArrayList<Snake> otherSnakes, int sizeX, int sizeY, boolean withWalls) {
-        if (withWalls && (position.getX() == 0 || position.getY() == 0 ||
-                position.getX() == sizeX - 1 || position.getY() == sizeY - 1)) {
+    protected boolean isEliminated(SnakeGame game, Snake snake, Position position, ArrayList<Snake> otherSnakes) {
+        if (game.getWithWalls() && (position.getX() == 0 || position.getY() == 0 ||
+                position.getX() == game.getSizeX() - 1 || position.getY() == game.getSizeY() - 1)) {
             return true;
         }
 
@@ -53,7 +54,7 @@ public abstract class Behavior {
         return false;
     }
 
-    protected ArrayList<Item> eatApple(Snake snake, ArrayList<Item> items, int pItem, int sizeX, int sizeY, boolean withWalls) {
+    protected ArrayList<Item> eatApple(SnakeGame game, Snake snake, int pItem) {
         int x;
         int y;
         int border = 0;
@@ -61,17 +62,17 @@ public abstract class Behavior {
         ArrayList<Item> newItems = new ArrayList<>();
         ArrayList<Position> unavailablePositions = new ArrayList<>();
 
-        if (withWalls)
+        if (game.getWithWalls())
             border = 1;
 
-        for (Item item : items)
+        for (Item item : game.getItems())
             unavailablePositions.add(new Position(item.getX(), item.getY()));
 
         unavailablePositions.addAll(snake.getPositions());
 
         do {
-            x = new Random().nextInt(sizeX + border - 1) - border;
-            y = new Random().nextInt(sizeY + border - 1) - border;
+            x = new Random().nextInt(game.getSizeX() + border - 1) - border;
+            y = new Random().nextInt(game.getSizeY() + border - 1) - border;
         } while (unavailablePositions.contains(new Position(x, y)));
 
         unavailablePositions.add(new Position(x, y));
@@ -93,8 +94,8 @@ public abstract class Behavior {
             snake.getPositions().add(new Position(snake.getPositions().get(snake.getPositions().size() - 1)));
 
             do {
-                x = new Random().nextInt(sizeX) + border;
-                y = new Random().nextInt(sizeY) + border;
+                x = new Random().nextInt(game.getSizeX()) + border;
+                y = new Random().nextInt(game.getSizeY()) + border;
             } while (unavailablePositions.contains(new Position(x, y)));
 
             newItems.add(new Item(x, y, type));
@@ -103,22 +104,25 @@ public abstract class Behavior {
         return newItems;
     }
 
-    protected boolean onItem(Snake snake, Position position, ArrayList<Item> items, int pItem, int sizeX, int sizeY, boolean withWalls) {
-        for (Item item : items)
+    protected boolean onItem(SnakeGame game, Snake snake, Position position, int pItem) {
+        for (Item item : game.getItems())
             if (item.getX() == position.getX() && item.getY() == position.getY()) {
                 switch (item.getItemType()) {
                     case APPLE:
-                        ArrayList<Item> itemsGenerated = eatApple(snake, items,pItem, sizeX, sizeY, withWalls);
-                        items.addAll(itemsGenerated);
-                        items.remove(item);
+                        ArrayList<Item> itemsGenerated = eatApple(game, snake, pItem);
+                        game.getItems().addAll(itemsGenerated);
+                        game.getItems().remove(item);
+                        game.addScore(30);
                         return true;
                     case SICK_BALL:
                         snake.setBehavior(new SickBehavior());
-                        items.remove(item);
+                        game.getItems().remove(item);
+                        game.addScore(-5);
                         return true;
                     case INVINCIBILITY_BALL:
                         snake.setBehavior(new InvincibleBehavior());
-                        items.remove(item);
+                        game.getItems().remove(item);
+                        game.addScore(5);
                         return true;
                     case BOX:
                         Random randBox = new Random();
@@ -127,7 +131,8 @@ public abstract class Behavior {
                         else
                             snake.setBehavior(new InvincibleBehavior());
 
-                        items.remove(item);
+                        game.getItems().remove(item);
+                        game.addScore(10);
                         return true;
                 }
             }
@@ -135,7 +140,7 @@ public abstract class Behavior {
         return false;
     }
 
-    public boolean moveAgent(Snake snake, AgentAction action, ArrayList<Snake> otherSnakes, ArrayList<Item> items, int sizeX, int sizeY, boolean withWalls) {
+    public boolean moveAgent(SnakeGame game, Snake snake, AgentAction action, ArrayList<Snake> otherSnakes) {
         if (!snake.getBehavior().effectStillOn())
             snake.setBehavior(new NormalBehavior());
 
@@ -149,34 +154,34 @@ public abstract class Behavior {
 
         switch (action) {
             case MOVE_UP:
-                if (!withWalls && position.getY() == 0)
-                    move = -sizeY + 1;
+                if (!game.getWithWalls() && position.getY() == 0)
+                    move = -game.getSizeY() + 1;
                 position.setY(position.getY() - move);
                 lastAction = AgentAction.MOVE_UP;
                 break;
             case MOVE_DOWN:
-                if (!withWalls && position.getY() == sizeY - 1)
-                    move = -sizeY + 1;
+                if (!game.getWithWalls() && position.getY() == game.getSizeY() - 1)
+                    move = -game.getSizeY() + 1;
                 position.setY(position.getY() + move);
                 lastAction = AgentAction.MOVE_DOWN;
                 break;
             case MOVE_LEFT:
-                if (!withWalls && position.getX() == 0)
-                    move = -sizeX + 1;
+                if (!game.getWithWalls() && position.getX() == 0)
+                    move = -game.getSizeX() + 1;
                 position.setX(position.getX() - move);
                 lastAction = AgentAction.MOVE_LEFT;
                 break;
             case MOVE_RIGHT:
-                if (!withWalls && position.getX() == sizeX - 1)
-                    move = -sizeX + 1;
+                if (!game.getWithWalls() && position.getX() == game.getSizeX() - 1)
+                    move = -game.getSizeX() + 1;
                 position.setX(position.getX() + move);
                 lastAction = AgentAction.MOVE_RIGHT;
                 break;
         }
 
-        return moveIfNotEliminated(snake, position, lastAction, otherSnakes, items, sizeX, sizeY, withWalls);
+        return moveIfNotEliminated(game, snake, position, lastAction, otherSnakes);
     }
 
-    protected abstract boolean moveIfNotEliminated(Snake snake, Position position, AgentAction lastAction, ArrayList<Snake> otherSnakes, ArrayList<Item> items, int sizeX, int sizeY, boolean withWalls);
+    protected abstract boolean moveIfNotEliminated(SnakeGame game, Snake snake, Position position, AgentAction lastAction, ArrayList<Snake> otherSnakes);
     public abstract Behaviors getBehaviorType();
 }

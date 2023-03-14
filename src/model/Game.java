@@ -8,11 +8,18 @@ public abstract class Game extends Observable implements Runnable {
     protected boolean isRunning; // false : Jeu en pause
     protected Thread thread;
     protected long time;
+    protected boolean gameOver;
 
     public Game(int maxturn) {
         this.maxturn = maxturn;
+        this.gameOver = false;
     }
+
     public int getTurn() { return this.turn; }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
 
     public abstract void initializeGame();
     protected abstract void takeTurn();

@@ -20,6 +20,8 @@ public class SnakeGame extends Game {
     private final int sizeX;
     private final int sizeY;
 
+    private int score;
+
     public SnakeGame(int maxTurn, ArrayList<FeaturesSnake> snakes, ArrayList<FeaturesItem> items, boolean withWalls, int sizeX, int sizeY, Strategy strategy) {
         super(maxTurn);
         this.initialSnakes = new ArrayList<>();
@@ -51,6 +53,13 @@ public class SnakeGame extends Game {
     public int getSizeX() { return this.sizeX; }
     public int getSizeY() { return this.sizeY; }
 
+    public int getScore() {
+        return score;
+    }
+
+    public void addScore(int score) {
+        this.score += score;
+    }
 
     public ArrayList<FeaturesSnake> getFeaturesSnakes() {
         ArrayList<FeaturesSnake> snakes = new ArrayList<>();
@@ -72,7 +81,9 @@ public class SnakeGame extends Game {
 
     public void initializeGame() {
         this.turn = 0;
+        this.score = 0;
         this.time = 100;
+        this.gameOver = false;
         this.isRunning = false;
 
         this.snakes = new ArrayList<Snake>();
@@ -101,6 +112,7 @@ public class SnakeGame extends Game {
 
     protected void gameOver() {
         System.out.println("Game Over!");
+        this.gameOver = true;
 
         setChanged();
         notifyObservers();
