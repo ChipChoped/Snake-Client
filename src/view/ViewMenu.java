@@ -92,7 +92,7 @@ public class ViewMenu {
                 frame.dispose();
 
                 try {
-                    ControllerSnakeGame controller = new ControllerSnakeGame(500, new InteractiveStrategy(), System.getProperty("user.dir") + "/layout/arenaNoWall.lay");
+                    ControllerSnakeGame controller = new ControllerSnakeGame(500, new InteractiveStrategy(), System.getProperty("user.dir") + "/layout/aloneNoWall.lay");
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
