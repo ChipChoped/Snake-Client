@@ -4,7 +4,6 @@ import behaviors.Behaviors;
 import controllers.ControllerSnakeGame;
 import model.SnakeGame;
 import states.EndState;
-import utils.ColorSnake;
 import utils.Snake;
 
 import java.awt.event.ActionEvent;
@@ -22,20 +21,15 @@ public class ViewCommand implements Observer {
     protected JFrame frame;
     protected JLabel turnNumberLabel = new JLabel("Turn : 0", JLabel.CENTER);
 
-    protected ArrayList<JLabel> player1HeartLabels = new ArrayList<>();
-    protected ArrayList<JLabel> player2HeartLabels = new ArrayList<>();
-
-    protected boolean player1Alive = true;
-    protected boolean player2Alive = false;
-
-    protected int numberOfPlayers = 1;
+    protected boolean playerAlive = true;
 
     protected ImageIcon heartIcon;
     protected ImageIcon sickHeartIcon;
     protected ImageIcon invincibleHeartIcon;
 
-    protected Behaviors player1Behavior = Behaviors.NORMAL;
-    protected Behaviors player2Behavior = Behaviors.NORMAL;
+    protected JLabel heartLabel;
+
+    protected Behaviors playerBehavior = Behaviors.NORMAL;
 
     public ViewCommand(Observable obs, ControllerSnakeGame controller) {
         obs.addObserver(this);
@@ -59,10 +53,7 @@ public class ViewCommand implements Observer {
         JPanel turnSliderPanel = new JPanel();
         JPanel gameInfoPanel = new JPanel();
         JPanel playersPanel = new JPanel();
-        JPanel player1Panel = new JPanel();
-        JPanel player2Panel = new JPanel();
-        JPanel lives1Panel = new JPanel();
-        JPanel lives2Panel = new JPanel();
+        JPanel playerPanel = new JPanel();
 
         playersPanel.setLayout(new GridLayout(1, 2));
 
@@ -71,7 +62,7 @@ public class ViewCommand implements Observer {
         turnCommandPanel.setLayout(new GridLayout(1, 2));
         turnSliderPanel.setLayout(new GridLayout(2, 1));
         gameInfoPanel.setLayout(new GridLayout(2, 1));
-        player1Panel.setLayout(new GridLayout(2, 1));
+        playerPanel.setLayout(new GridLayout(2, 1));
 
         Icon restartIcon = new ImageIcon("icons/icon_restart.png");
         Icon playIcon = new ImageIcon("icons/icon_play.png");
@@ -102,42 +93,14 @@ public class ViewCommand implements Observer {
         restartButton.setEnabled(false);
         pauseButton.setEnabled(false);
 
-        JLabel player1Label = new JLabel("Player 1", JLabel.CENTER);
-        this.player1HeartLabels.add(new JLabel(heartIcon));
-        this.player1HeartLabels.add(new JLabel(heartIcon));
-        this.player1HeartLabels.add(new JLabel(heartIcon));
+        JLabel playerLabel = new JLabel("Player", JLabel.CENTER);
 
-        lives1Panel.add(this.player1HeartLabels.get(0));
-        lives1Panel.add(this.player1HeartLabels.get(1));
-        lives1Panel.add(this.player1HeartLabels.get(2));
+        this.heartLabel = new JLabel(heartIcon);
 
-        player1Panel.add(player1Label);
-        player1Panel.add(lives1Panel);
+        playerPanel.add(playerLabel);
+        playerPanel.add(this.heartLabel);
 
-        playersPanel.add(player1Panel);
-
-        if (this.controller.getGame().getInitialSnakes().size() >= 2) {
-            player2Panel.setLayout(new GridLayout(2, 1));
-
-            JLabel player2Label = new JLabel("Player 2", JLabel.CENTER);
-            this.player2HeartLabels.add(new JLabel(heartIcon));
-            this.player2HeartLabels.add(new JLabel(heartIcon));
-            this.player2HeartLabels.add(new JLabel(heartIcon));
-
-            lives2Panel.add(this.player2HeartLabels.get(0));
-            lives2Panel.add(this.player2HeartLabels.get(1));
-            lives2Panel.add(this.player2HeartLabels.get(2));
-
-            player2Panel.add(player2Label);
-            player2Panel.add(lives2Panel);
-
-            playersPanel.add(player2Panel);
-
-            this.numberOfPlayers = 2;
-            this.player2Alive = true;
-        }
-        else
-            playersPanel.setLayout(new GridLayout(2, 1));
+        playersPanel.add(playerPanel);
 
         restartButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
@@ -148,27 +111,8 @@ public class ViewCommand implements Observer {
 
                 controller.restart();
 
-                player1Alive = true;
-
-                player1HeartLabels.add(new JLabel(finalHeartIcon));
-                player1HeartLabels.add(new JLabel(finalHeartIcon));
-                player1HeartLabels.add(new JLabel(finalHeartIcon));
-
-                lives1Panel.add(player1HeartLabels.get(0));
-                lives1Panel.add(player1HeartLabels.get(1));
-                lives1Panel.add(player1HeartLabels.get(2));
-
-                if (numberOfPlayers == 2) {
-                    player2Alive = true;
-
-                    player2HeartLabels.add(new JLabel(finalHeartIcon));
-                    player2HeartLabels.add(new JLabel(finalHeartIcon));
-                    player2HeartLabels.add(new JLabel(finalHeartIcon));
-
-                    lives2Panel.add(player2HeartLabels.get(0));
-                    lives2Panel.add(player2HeartLabels.get(1));
-                    lives2Panel.add(player2HeartLabels.get(2));
-                }
+                playerAlive = true;
+                heartLabel.setIcon(finalHeartIcon);
             }
         });
 
@@ -242,84 +186,33 @@ public class ViewCommand implements Observer {
         frame.setVisible(true);
     }
 
-    private void updatePlayerBehavior(Behaviors behavior, ArrayList<JLabel> hearts) {
+    private void updatePlayerBehavior(Behaviors behavior) {
         switch (behavior) {
             case NORMAL:
-                for (JLabel heart : hearts)
-                    heart.setIcon(this.heartIcon);
+                this.heartLabel.setIcon(this.heartIcon);
                 break;
             case SICK:
-                for (JLabel heart : hearts)
-                    heart.setIcon(this.sickHeartIcon);
+                this.heartLabel.setIcon(this.sickHeartIcon);
                 break;
             case INVINCIBLE:
-                for (JLabel heart : hearts)
-                    heart.setIcon(this.invincibleHeartIcon);
+                this.heartLabel.setIcon(this.invincibleHeartIcon);
                 break;
         }
     }
 
     private void updatePlayersLives(ArrayList<Snake> snakes) {
-        boolean greenSnakeAlive = false;
-        boolean redSnakeAlive = false;
+        boolean snakeAlive = snakes.size() == 1;
 
-        for (Snake snake : snakes) {
-            if (snake.getColorSnake() == ColorSnake.Green)
-                greenSnakeAlive = true;
-            else if (snake.getColorSnake() == ColorSnake.Red)
-                redSnakeAlive = true;
-        }
+        if (this.playerAlive) {
+            if (!snakeAlive)
+                this.playerAlive = false;
 
-        if (this.player1Alive) {
-            if (!greenSnakeAlive) {
-                this.player1HeartLabels.get(this.player1HeartLabels.size() - 1).setVisible(false);
-                this.player1HeartLabels.remove(this.player1HeartLabels.size() - 1);
-
-                if (this.player1HeartLabels.size() == 0) {
-                    this.player1Alive = false;
-                }
-                else
-                    this.controller.getGame().getSnakes().add(0, new Snake(this.controller.getGame().getInitialSnakes().get(0)));
-            }
-
-            if (this.player1Alive && greenSnakeAlive) {
+            if (this.playerAlive && snakeAlive) {
                 Behaviors behavior = snakes.get(0).getBehavior().getBehaviorType();
 
-                if (behavior != this.player1Behavior) {
-                    this.player1Behavior = behavior;
-                    updatePlayerBehavior(behavior, this.player1HeartLabels);
-                }
-            }
-        }
-
-        if (this.numberOfPlayers == 2) {
-            if (this.player2Alive) {
-                if (!redSnakeAlive) {
-                    this.player2HeartLabels.get(this.player2HeartLabels.size() - 1).setVisible(false);
-                    this.player2HeartLabels.remove(this.player2HeartLabels.size() - 1);
-
-                    if (this.player2HeartLabels.size() == 0)
-                        this.player2Alive = false;
-                    else
-                        if (this.controller.getGame().getSnakes().size() > 1)
-                            this.controller.getGame().getSnakes().add(1, new Snake(this.controller.getGame().getInitialSnakes().get(1)));
-                        else {
-                            this.controller.getGame().getSnakes().add(new Snake(this.controller.getGame().getInitialSnakes().get(1)));
-                        }
-                }
-
-                if (this.player2Alive && redSnakeAlive) {
-                    Behaviors behavior;
-
-                    if (snakes.size() == 1)
-                         behavior = snakes.get(0).getBehavior().getBehaviorType();
-                    else
-                        behavior = snakes.get(1).getBehavior().getBehaviorType();
-
-                    if (behavior != this.player2Behavior) {
-                        this.player2Behavior = behavior;
-                        updatePlayerBehavior(behavior, this.player2HeartLabels);
-                    }
+                if (behavior != this.playerBehavior) {
+                    this.playerBehavior = behavior;
+                    updatePlayerBehavior(behavior);
                 }
             }
         }
@@ -330,6 +223,7 @@ public class ViewCommand implements Observer {
         turnNumberLabel.setText("Turn : " + game.getTurn());
         updatePlayersLives(game.getSnakes());
 
-        //this.frame.repaint();
+        if (game.isGameOver())
+            System.out.println(game.getScore());
     }
 }
