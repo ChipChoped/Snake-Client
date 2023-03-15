@@ -1,10 +1,7 @@
-import view.ViewGameMenu;
 import view.ViewLogIn;
 
 import java.net.*;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
 
 public class Client extends Thread {
     private final static int port = 9632;
