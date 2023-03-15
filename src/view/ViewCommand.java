@@ -5,9 +5,14 @@ import controllers.ControllerSnakeGame;
 import model.SnakeGame;
 import states.EndState;
 import utils.Snake;
+import utils.User;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
@@ -16,9 +21,15 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
+import static functions.Request.*;
+
 public class ViewCommand implements Observer {
+    protected User user;
+    protected Socket socket;
     protected ControllerSnakeGame controller;
+
     protected JFrame frame;
+    protected JLabel scoreLabel = new JLabel("Score : 0", JLabel.CENTER);
     protected JLabel turnNumberLabel = new JLabel("Turn : 0", JLabel.CENTER);
 
     protected boolean playerAlive = true;
@@ -31,12 +42,14 @@ public class ViewCommand implements Observer {
 
     protected Behaviors playerBehavior = Behaviors.NORMAL;
 
-    public ViewCommand(Observable obs, ControllerSnakeGame controller) {
+    public ViewCommand(Observable obs, Socket socket, User user, ControllerSnakeGame controller) {
         obs.addObserver(this);
+
+        this.user = user;
+        this.socket = socket;
         this.controller = controller;
 
         frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setTitle("Snake Command Panel");
         frame.setSize(new Dimension(700, 330));
 
@@ -52,17 +65,12 @@ public class ViewCommand implements Observer {
         JPanel turnCommandPanel = new JPanel();
         JPanel turnSliderPanel = new JPanel();
         JPanel gameInfoPanel = new JPanel();
-        JPanel playersPanel = new JPanel();
-        JPanel playerPanel = new JPanel();
-
-        playersPanel.setLayout(new GridLayout(1, 2));
 
         mainPanel.setLayout(new GridLayout(2, 1));
         gameCommandsPanel.setLayout(new GridLayout(1, 4));
         turnCommandPanel.setLayout(new GridLayout(1, 2));
         turnSliderPanel.setLayout(new GridLayout(2, 1));
-        gameInfoPanel.setLayout(new GridLayout(2, 1));
-        playerPanel.setLayout(new GridLayout(2, 1));
+        gameInfoPanel.setLayout(new GridLayout(2, 2));
 
         Icon restartIcon = new ImageIcon("icons/icon_restart.png");
         Icon playIcon = new ImageIcon("icons/icon_play.png");
@@ -89,20 +97,15 @@ public class ViewCommand implements Observer {
         JButton playButton = new JButton(playIcon);
         JButton stepButton = new JButton(stepIcon);
         JButton pauseButton = new JButton(pauseIcon);
+        JButton exitButton = new JButton("Exit");
 
         restartButton.setEnabled(false);
         pauseButton.setEnabled(false);
 
-        JLabel playerLabel = new JLabel("Player", JLabel.CENTER);
-
         this.heartLabel = new JLabel(heartIcon);
 
-        playerPanel.add(playerLabel);
-        playerPanel.add(this.heartLabel);
-
-        playersPanel.add(playerPanel);
-
         restartButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 restartButton.setEnabled(false);
                 pauseButton.setEnabled(false);
@@ -117,6 +120,7 @@ public class ViewCommand implements Observer {
         });
 
         playButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 playButton.setEnabled(false);
                 stepButton.setEnabled(false);
@@ -128,6 +132,7 @@ public class ViewCommand implements Observer {
         });
 
         stepButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 restartButton.setEnabled(true);
                 controller.step();
@@ -140,6 +145,7 @@ public class ViewCommand implements Observer {
         });
 
         pauseButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 restartButton.setEnabled(true);
                 pauseButton.setEnabled(false);
@@ -147,6 +153,19 @@ public class ViewCommand implements Observer {
                 stepButton.setEnabled(true);
 
                 controller.pause();
+            }
+        });
+
+        exitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                closeGame();
+            }
+        });
+
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                closeGame();
             }
         });
 
@@ -171,7 +190,9 @@ public class ViewCommand implements Observer {
         });
 
         gameInfoPanel.add(turnNumberLabel);
-        gameInfoPanel.add(playersPanel);
+        gameInfoPanel.add(exitButton);
+        gameInfoPanel.add(scoreLabel);
+        gameInfoPanel.add(heartLabel);
 
         turnSliderPanel.add(turnSliderLabel);
         turnSliderPanel.add(turnSlider);
@@ -184,6 +205,15 @@ public class ViewCommand implements Observer {
         frame.add(mainPanel);
 
         frame.setVisible(true);
+    }
+
+    private void closeGame() {
+        System.gc();
+
+        for (Window window : Window.getWindows())
+            window.dispose();
+
+        ViewGameMenu viewGameMenu = new ViewGameMenu(this.socket, this.user);
     }
 
     private void updatePlayerBehavior(Behaviors behavior) {
@@ -220,10 +250,17 @@ public class ViewCommand implements Observer {
 
     public void update(Observable observable, Object o) {
         SnakeGame game = (SnakeGame) observable;
+        scoreLabel.setText("Score : " + game.getScore());
         turnNumberLabel.setText("Turn : " + game.getTurn());
+
         updatePlayersLives(game.getSnakes());
 
-        if (game.isGameOver())
-            System.out.println(game.getScore());
+        if (game.isGameOver()) {
+            try {
+                saveGame(this.socket, user.ID(), game.isWon(), game.getScore());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

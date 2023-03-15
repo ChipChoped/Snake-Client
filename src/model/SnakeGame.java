@@ -6,6 +6,8 @@ import utils.*;
 
 import java.util.ArrayList;
 
+import static java.lang.Thread.sleep;
+
 public class SnakeGame extends Game {
     private final ArrayList<Snake> initialSnakes;
     private final ArrayList<Item> initialItems;
@@ -21,6 +23,7 @@ public class SnakeGame extends Game {
     private final int sizeY;
 
     private int score;
+    private boolean won;
 
     public SnakeGame(int maxTurn, ArrayList<FeaturesSnake> snakes, ArrayList<FeaturesItem> items, boolean withWalls, int sizeX, int sizeY, Strategy strategy) {
         super(maxTurn);
@@ -55,6 +58,9 @@ public class SnakeGame extends Game {
 
     public int getScore() {
         return score;
+    }
+    public boolean isWon() {
+        return won;
     }
 
     public void addScore(int score) {
@@ -112,9 +118,8 @@ public class SnakeGame extends Game {
 
     protected void gameOver() {
         System.out.println("Game Over!");
-        this.gameOver = true;
 
-        setChanged();
-        notifyObservers();
+        this.gameOver = true;
+        this.won = turn == maxturn;
     }
 }

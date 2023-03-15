@@ -4,21 +4,24 @@ import model.SnakeGame;
 import model.InputMap;
 import states.*;
 import strategies.Strategy;
+import utils.User;
 import view.PanelSnakeGame;
 import view.ViewCommand;
 import view.ViewSnakeGame;
 
+import java.net.Socket;
+
 public class ControllerSnakeGame extends AbstractController {
     private State state;
 
-    public ControllerSnakeGame(int maxTurn, Strategy strategy, String mapPath) throws Exception {
+    public ControllerSnakeGame(Socket socket, User user, int maxTurn, Strategy strategy, String mapPath) throws Exception {
         InputMap map = new InputMap(mapPath);
         PanelSnakeGame panelSnakeGame = new PanelSnakeGame(map.getSizeX(), map.getSizeY(), map.get_walls(), map.getStart_snakes(), map.getStart_items());
         this.game = new SnakeGame(maxTurn, map.getStart_snakes(), map.getStart_items(), map.get_walls()[0][0], map.getSizeX(), map.getSizeY(), strategy);
         this.state = new RestartState(game);
 
-        ViewCommand viewCommand = new ViewCommand(this.game, this);
-        ViewSnakeGame viewSnakeGame = new ViewSnakeGame(this.game, this, panelSnakeGame);
+        ViewCommand viewCommand = new ViewCommand(this.game, socket, user, this);
+        ViewSnakeGame viewSnakeGame = new ViewSnakeGame(this.game, socket, user, this, panelSnakeGame);
     }
 
     public SnakeGame getGame() { return (SnakeGame) this.game; }

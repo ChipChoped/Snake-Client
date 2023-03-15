@@ -1,27 +1,30 @@
 package view;
 
 import controllers.ControllerSnakeGame;
+import org.json.JSONObject;
 import strategies.InteractiveStrategy;
-import strategies.RandomStrategy;
-import strategies.Strategy;
-import utils.GameMode;
+import utils.User;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import static functions.Request.disconnect;
+import static functions.Request.logOut;
 
 public class ViewGameMenu {
-    private GameMode chosenMode = GameMode.MANUAL;
-    private String chosenMapPath = System.getProperty("user.dir") + "/layout/arenaNoWall.lay";
-    private String chosenMapName = "arenaNoWall";
-    private int numberOfTurns = 500;
-
-    public ViewGameMenu() {
+    public ViewGameMenu(Socket socket, User user) {
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setTitle("Snake Game Menu");
-        frame.setSize(new Dimension(700, 300));
+        frame.setTitle("Snake Menu");
+        frame.setSize(new Dimension(500, 300));
 
         Dimension windowSize = frame.getSize();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -31,116 +34,93 @@ public class ViewGameMenu {
         frame.setLocation(dx,dy);
 
         JPanel mainPanel = new JPanel();
-        JPanel leftPanel = new JPanel();
-        JPanel rightPanel = new JPanel();
-        JPanel radioButtonsPanel = new JPanel();
-        JPanel turnPanel = new JPanel();
-        JPanel resizePanel = new JPanel();
-        JPanel filePanel = new JPanel();
+        JPanel topPanel = new JPanel();
+        JPanel bottomPanel = new JPanel();
 
-        mainPanel.setLayout(new GridLayout(1, 2));
-        leftPanel.setLayout(new GridLayout(3, 1));
-        rightPanel.setLayout(new GridLayout(2, 1));
-        radioButtonsPanel.setLayout(new GridLayout(1, 2));
-        turnPanel.setLayout(new GridLayout(1, 2));
-        turnPanel.setLayout(new GridLayout(3, 1));
-        filePanel.setLayout(new GridLayout(4, 1));
+        mainPanel.setLayout(new GridLayout(2, 1));
+        bottomPanel.setLayout(new GridLayout(1, 3));
 
-        JLabel gameModeLabel = new JLabel("Choose which game mode you want to play in :", JLabel.CENTER);
+        JLabel userLabel = new JLabel("Welcome " + user.username() + "!", JLabel.CENTER);
+        JLabel errorLabel = new JLabel();
+        JButton profileButton = new JButton("Profile \u0004");
+        JButton logOutButton = new JButton("Log out");
+        JButton playButton = new JButton("Play!");
 
-        JRadioButton manualModeRadio = new JRadioButton("Manual Mode");
-        JRadioButton randomModeRadio = new JRadioButton("Random Mode");
+        profileButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                String url = "http://localhost:8080/Snake/user/" + user.username();
 
-        manualModeRadio.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                chosenMode = GameMode.MANUAL;
-            }
-        });
-
-        randomModeRadio.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                chosenMode = GameMode.RANDOM;
-            }
-        });
-
-        manualModeRadio.setSelected(true);
-        ButtonGroup gameModeRadioGroup = new ButtonGroup();
-
-        JLabel turnLabel = new JLabel("Number of turns : ");
-        JTextField turnField = new JTextField(String.valueOf(this.numberOfTurns), 3);
-
-        JLabel fileChooserLabel = new JLabel("Choose which map you want to play in :", JLabel.CENTER);
-        JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir") + "/layout");
-        JButton fileButton = new JButton("Choose file");
-        JLabel currentMapLabel = new JLabel("Current map : " + chosenMapName, JLabel.CENTER);
-
-        fileButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                int state = fileChooser.showOpenDialog(null);
-
-                if (state == JFileChooser.APPROVE_OPTION) {
-                    chosenMapPath = fileChooser.getSelectedFile().getAbsolutePath();
-                    chosenMapName = fileChooser.getSelectedFile().getName().substring(0, fileChooser.getSelectedFile().getName().length() - 4);
-                    currentMapLabel.setText("Current map : " + chosenMapName);
+                try {
+                    Desktop desktop = Desktop.getDesktop();
+                    desktop.browse(new URI(url));
+                } catch (IOException | URISyntaxException | UnsupportedOperationException e) {
+                    try {
+                        Runtime runtime = Runtime.getRuntime();
+                        runtime.exec("xdg-open " + url);
+                    } catch (IOException e_) {
+                        e.printStackTrace();
+                        e_.printStackTrace();
+                    }
                 }
             }
         });
 
-        JButton playButton = new JButton("Play!");
+        logOutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                try {
+                    JSONObject jsonResponse = logOut(socket, user.ID());
+
+                    if (jsonResponse.get("type").equals("return-log-out")) {
+                        frame.dispose();
+                        ViewLogIn viewLogIn = new ViewLogIn(socket);
+                    }
+                    else if (jsonResponse.get("type").equals("error")) {
+                        errorLabel.setText((String) jsonResponse.get("message"));
+                        errorLabel.setForeground(Color.red);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
 
         playButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
-                Strategy chosenStrategy = null;
-
-                switch (chosenMode) {
-                    case MANUAL:
-                        chosenStrategy = new InteractiveStrategy();
-                        break;
-                    case RANDOM:
-                        chosenStrategy = new RandomStrategy();
-                }
-
-                numberOfTurns = Integer.parseInt(turnField.getText());
-
                 frame.dispose();
-                
+
                 try {
-                    ControllerSnakeGame controller = new ControllerSnakeGame(numberOfTurns, chosenStrategy, chosenMapPath);
+                    ControllerSnakeGame controller = new ControllerSnakeGame(socket, user, 300, new InteractiveStrategy(), System.getProperty("user.dir") + "/layout/aloneNoWall.lay");
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
         });
 
-        gameModeRadioGroup.add(manualModeRadio);
-        gameModeRadioGroup.add(randomModeRadio);
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                try {
+                    logOut(socket, user.ID());
+                    disconnect(socket);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
 
-        radioButtonsPanel.add(manualModeRadio);
-        radioButtonsPanel.add(randomModeRadio);
-        radioButtonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        topPanel.add(userLabel);
+        topPanel.add(errorLabel);
 
-        resizePanel.add(turnField);
+        bottomPanel.add(profileButton);
+        bottomPanel.add(logOutButton);
+        bottomPanel.add(playButton);
 
-        turnPanel.add(turnLabel);
-        turnPanel.add(turnField);
-
-        leftPanel.add(gameModeLabel);
-        leftPanel.add(radioButtonsPanel);
-        leftPanel.add(turnPanel);
-        leftPanel.setBorder(BorderFactory.createTitledBorder("Game Mode"));
-
-        filePanel.add(fileChooserLabel);
-        filePanel.add(fileButton);
-        filePanel.add(currentMapLabel);
-        filePanel.setBorder(BorderFactory.createTitledBorder("Map Selection"));
-
-        rightPanel.add(filePanel);
-        rightPanel.add(playButton);
-
-        mainPanel.add(leftPanel);
-        mainPanel.add(rightPanel);
+        mainPanel.add(topPanel);
+        mainPanel.add(bottomPanel);
 
         frame.add(mainPanel);
+
         frame.setVisible(true);
     }
 }

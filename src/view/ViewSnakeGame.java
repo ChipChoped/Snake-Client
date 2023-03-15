@@ -3,11 +3,15 @@ package view;
 import controllers.ControllerSnakeGame;
 import model.SnakeGame;
 import utils.AgentAction;
+import utils.User;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.net.Socket;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -16,12 +20,11 @@ public class ViewSnakeGame implements Observer, KeyListener {
     protected PanelSnakeGame panelSnakeGame;
     JFrame frame = new JFrame();
 
-    public ViewSnakeGame(Observable obs, ControllerSnakeGame controller, PanelSnakeGame panelSnakeGame) {
+    public ViewSnakeGame(Observable obs, Socket socket, User user, ControllerSnakeGame controller, PanelSnakeGame panelSnakeGame) {
         obs.addObserver(this);
         this.controller = controller;
         this.panelSnakeGame = panelSnakeGame;
 
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setTitle("Snake");
         frame.setSize(new Dimension(panelSnakeGame.getSizeX() * 40, panelSnakeGame.getSizeY() * 40));
         frame.setVisible(true);
@@ -34,6 +37,17 @@ public class ViewSnakeGame implements Observer, KeyListener {
         int dx = centerPoint.x - windowSize.width / 2;
         int dy = centerPoint.y - windowSize.width / 2;
         frame.setLocation(dx,dy);
+
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                System.gc();
+
+                for (Window window : Window.getWindows())
+                    window.dispose();
+
+                ViewGameMenu viewGameMenu = new ViewGameMenu(socket, user);
+            }
+        });
 
         try {
             frame.add(this.panelSnakeGame);
