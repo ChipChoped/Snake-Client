@@ -55,7 +55,7 @@ public class ViewLogIn {
                     if (jsonResponse.get("type").equals("return-log-in")) {
                         User user = new User(jsonResponse.getInt("id"), usernameTextField.getText());
                         frame.dispose();
-                        ViewMenu viewMenu = new ViewMenu(socket, user);
+                        ViewGameMenu viewGameMenu = new ViewGameMenu(socket, user);
                     }
                     else if (jsonResponse.get("type").equals("error")) {
                         errorLabel.setText((String) jsonResponse.get("message"));
