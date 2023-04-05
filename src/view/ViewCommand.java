@@ -3,15 +3,17 @@ package view;
 import behaviors.Behaviors;
 import controllers.ControllerSnakeGame;
 import model.SnakeGame;
+import org.json.JSONObject;
 import states.EndState;
+import utils.AgentAction;
 import utils.Snake;
 import utils.User;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Observable;
@@ -21,12 +23,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
+import static functions.Game.*;
 import static functions.Request.*;
 
-public class ViewCommand implements Observer {
+public class ViewCommand extends Observable {
     protected User user;
     protected Socket socket;
-    protected ControllerSnakeGame controller;
 
     protected JFrame frame;
     protected JLabel scoreLabel = new JLabel("Score : 0", JLabel.CENTER);
@@ -42,12 +44,17 @@ public class ViewCommand implements Observer {
 
     protected Behaviors playerBehavior = Behaviors.NORMAL;
 
-    public ViewCommand(Observable obs, Socket socket, User user, ControllerSnakeGame controller) {
-        obs.addObserver(this);
+    protected BufferedReader in;
+    protected PrintStream out;
 
+    public static AgentAction nextAction;
+
+    public ViewCommand(Socket socket, User user) throws IOException {
         this.user = user;
         this.socket = socket;
-        this.controller = controller;
+
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        this.out = new PrintStream(socket.getOutputStream());
 
         frame = new JFrame();
         frame.setTitle("Snake Command Panel");
@@ -62,14 +69,10 @@ public class ViewCommand implements Observer {
 
         JPanel mainPanel = new JPanel();
         JPanel gameCommandsPanel = new JPanel();
-        JPanel turnCommandPanel = new JPanel();
-        JPanel turnSliderPanel = new JPanel();
         JPanel gameInfoPanel = new JPanel();
 
         mainPanel.setLayout(new GridLayout(2, 1));
-        gameCommandsPanel.setLayout(new GridLayout(1, 4));
-        turnCommandPanel.setLayout(new GridLayout(1, 2));
-        turnSliderPanel.setLayout(new GridLayout(2, 1));
+        gameCommandsPanel.setLayout(new GridLayout(1, 3));
         gameInfoPanel.setLayout(new GridLayout(2, 2));
 
         Icon restartIcon = new ImageIcon("icons/icon_restart.png");
@@ -101,6 +104,7 @@ public class ViewCommand implements Observer {
 
         restartButton.setEnabled(false);
         pauseButton.setEnabled(false);
+        stepButton.setEnabled(false);
 
         this.heartLabel = new JLabel(heartIcon);
 
@@ -110,9 +114,13 @@ public class ViewCommand implements Observer {
                 restartButton.setEnabled(false);
                 pauseButton.setEnabled(false);
                 playButton.setEnabled(true);
-                stepButton.setEnabled(true);
 
-                controller.restart();
+                try {
+                    restart(socket);
+                    frame.requestFocus();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
                 playerAlive = true;
                 heartLabel.setIcon(finalHeartIcon);
@@ -123,23 +131,14 @@ public class ViewCommand implements Observer {
             @Override
             public void actionPerformed(ActionEvent event) {
                 playButton.setEnabled(false);
-                stepButton.setEnabled(false);
                 restartButton.setEnabled(true);
                 pauseButton.setEnabled(true);
 
-                controller.play();
-            }
-        });
-
-        stepButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                restartButton.setEnabled(true);
-                controller.step();
-
-                if (controller.getState() instanceof EndState) {
-                    playButton.setEnabled(false);
-                    stepButton.setEnabled(false);
+                try {
+                    play(socket);
+                    frame.requestFocus();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         });
@@ -150,9 +149,13 @@ public class ViewCommand implements Observer {
                 restartButton.setEnabled(true);
                 pauseButton.setEnabled(false);
                 playButton.setEnabled(true);
-                stepButton.setEnabled(true);
 
-                controller.pause();
+                try {
+                    pause(socket);
+                    frame.requestFocus();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
@@ -171,40 +174,50 @@ public class ViewCommand implements Observer {
 
         gameCommandsPanel.add(restartButton);
         gameCommandsPanel.add(playButton);
-        gameCommandsPanel.add(stepButton);
         gameCommandsPanel.add(pauseButton);
-
-        JLabel turnSliderLabel = new JLabel("Number of turns per second", JLabel.CENTER);
-
-        JSlider turnSlider = new JSlider();
-        turnSlider.setMinimum(1);
-        turnSlider.setMaximum(10);
-        turnSlider.setMajorTickSpacing(1);
-        turnSlider.setPaintTicks(true);
-        turnSlider.setPaintLabels(true);
-
-        turnSlider.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent event) {
-                controller.setSpeed(turnSlider.getValue());
-            }
-        });
 
         gameInfoPanel.add(turnNumberLabel);
         gameInfoPanel.add(exitButton);
         gameInfoPanel.add(scoreLabel);
         gameInfoPanel.add(heartLabel);
 
-        turnSliderPanel.add(turnSliderLabel);
-        turnSliderPanel.add(turnSlider);
-
-        turnCommandPanel.add(turnSliderPanel);
-        turnCommandPanel.add(gameInfoPanel);
-
         mainPanel.add(gameCommandsPanel);
-        mainPanel.add(turnCommandPanel);
+        mainPanel.add(gameInfoPanel);
         frame.add(mainPanel);
 
         frame.setVisible(true);
+
+        frame.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent keyEvent) {}
+
+            @Override
+            public void keyPressed(KeyEvent keyEvent) {
+            }
+
+            @Override
+            public void keyReleased(KeyEvent keyEvent) {
+
+                switch(keyEvent.getKeyCode()) {
+                    case KeyEvent.VK_UP, KeyEvent.VK_Z:
+                        ViewCommand.nextAction = AgentAction.MOVE_UP;
+                        break;
+                    case KeyEvent.VK_DOWN, KeyEvent.VK_S:
+                        ViewCommand.nextAction = AgentAction.MOVE_DOWN;
+                        break;
+                    case KeyEvent.VK_LEFT, KeyEvent.VK_Q:
+                        ViewCommand.nextAction = AgentAction.MOVE_LEFT;
+                        break;
+                    case KeyEvent.VK_RIGHT, KeyEvent.VK_D:
+                        ViewCommand.nextAction = AgentAction.MOVE_RIGHT;
+                        break;
+                }
+            }
+        });
+
+        frame.requestFocusInWindow();
+
+        new Test().execute();
     }
 
     private void closeGame() {
@@ -212,6 +225,10 @@ public class ViewCommand implements Observer {
 
         for (Window window : Window.getWindows())
             window.dispose();
+
+        JSONObject jsonRequest = new JSONObject();
+        jsonRequest.put("type", "exit");
+        this.out.println(jsonRequest);
 
         ViewGameMenu viewGameMenu = new ViewGameMenu(this.socket, this.user);
     }
@@ -248,6 +265,14 @@ public class ViewCommand implements Observer {
         }
     }
 
+    public void updateGame(JSONObject jsonResponse) {
+        scoreLabel.setText("Score : " + jsonResponse.get("score").toString());
+        turnNumberLabel.setText("Turn : " + jsonResponse.get("turn").toString());
+
+        setChanged();
+        notifyObservers(jsonResponse);
+    }
+
     public void update(Observable observable, Object o) {
         SnakeGame game = (SnakeGame) observable;
         scoreLabel.setText("Score : " + game.getScore());
@@ -260,6 +285,30 @@ public class ViewCommand implements Observer {
                 saveGame(this.socket, user.ID(), game.isWon(), game.getScore());
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            }
+        }
+    }
+
+    class Test extends SwingWorker {
+        @Override
+        protected Object doInBackground() throws Exception {
+            while (true){
+                try {
+                    JSONObject jsonResponse = new JSONObject(in.readLine());
+
+                    switch ((String) jsonResponse.get("type")) {
+                        case "update-game":
+                            updateGame(jsonResponse);
+
+                            JSONObject jsonRequest = new JSONObject();
+                            jsonRequest.put("type", "next-action");
+                            jsonRequest.put("next-action", ViewCommand.nextAction.toString());
+
+                            out.println(jsonRequest);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }

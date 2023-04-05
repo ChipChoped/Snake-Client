@@ -20,8 +20,8 @@ public class ControllerSnakeGame extends AbstractController {
         this.game = new SnakeGame(maxTurn, map.getStart_snakes(), map.getStart_items(), map.get_walls()[0][0], map.getSizeX(), map.getSizeY(), strategy);
         this.state = new RestartState(game);
 
-        ViewCommand viewCommand = new ViewCommand(this.game, socket, user, this);
-        ViewSnakeGame viewSnakeGame = new ViewSnakeGame(this.game, socket, user, this, panelSnakeGame);
+//        ViewCommand viewCommand = new ViewCommand(this.game, socket, user, this);
+//        ViewSnakeGame viewSnakeGame = new ViewSnakeGame(this.game, socket, user, this, panelSnakeGame);
     }
 
     public SnakeGame getGame() { return (SnakeGame) this.game; }

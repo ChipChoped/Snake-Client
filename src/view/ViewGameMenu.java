@@ -1,8 +1,7 @@
 package view;
 
-import controllers.ControllerSnakeGame;
 import org.json.JSONObject;
-import strategies.InteractiveStrategy;
+import utils.AgentAction;
 import utils.User;
 
 import javax.swing.*;
@@ -11,11 +10,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static functions.Game.initGame;
 import static functions.Request.disconnect;
 import static functions.Request.logOut;
 
@@ -91,7 +95,10 @@ public class ViewGameMenu {
                 frame.dispose();
 
                 try {
-                    ControllerSnakeGame controller = new ControllerSnakeGame(socket, user, 300, new InteractiveStrategy(), System.getProperty("user.dir") + "/layout/aloneNoWall.lay");
+                    AgentAction nextAction = null;
+                    PanelSnakeGame panelSnakeGame = initGame(socket);
+                    ViewCommand viewCommand = new ViewCommand(socket, user);
+                    ViewSnakeGame viewSnakeGame = new ViewSnakeGame(viewCommand, socket, user, panelSnakeGame, nextAction);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

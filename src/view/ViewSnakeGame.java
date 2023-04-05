@@ -1,9 +1,7 @@
 package view;
 
-import controllers.ControllerSnakeGame;
-import model.SnakeGame;
-import utils.AgentAction;
-import utils.User;
+import org.json.JSONObject;
+import utils.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,25 +9,36 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Observable;
 import java.util.Observer;
 
-public class ViewSnakeGame implements Observer, KeyListener {
-    protected ControllerSnakeGame controller;
-    protected PanelSnakeGame panelSnakeGame;
-    JFrame frame = new JFrame();
+import static functions.Game.updateGame;
 
-    public ViewSnakeGame(Observable obs, Socket socket, User user, ControllerSnakeGame controller, PanelSnakeGame panelSnakeGame) {
-        obs.addObserver(this);
-        this.controller = controller;
+public class ViewSnakeGame implements Observer {
+    private PanelSnakeGame panelSnakeGame;
+    private JFrame frame = new JFrame();
+    private AgentAction nextAction;
+
+    private BufferedReader in;
+    private PrintStream out;
+
+    public ViewSnakeGame(Observable observable, Socket socket, User user, PanelSnakeGame panelSnakeGame, AgentAction nextAction) throws IOException {
+        observable.addObserver(this);
+
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        this.out = new PrintStream(socket.getOutputStream());
+
         this.panelSnakeGame = panelSnakeGame;
+        this.nextAction = nextAction;
 
         frame.setTitle("Snake");
         frame.setSize(new Dimension(panelSnakeGame.getSizeX() * 40, panelSnakeGame.getSizeY() * 40));
         frame.setVisible(true);
-        frame.addKeyListener(this);
-        frame.requestFocus();
 
         Dimension windowSize = frame.getSize();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -40,12 +49,12 @@ public class ViewSnakeGame implements Observer, KeyListener {
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent we) {
-                System.gc();
+            System.gc();
 
-                for (Window window : Window.getWindows())
-                    window.dispose();
+            for (Window window : Window.getWindows())
+                window.dispose();
 
-                ViewGameMenu viewGameMenu = new ViewGameMenu(socket, user);
+            ViewGameMenu viewGameMenu = new ViewGameMenu(socket, user);
             }
         });
 
@@ -55,46 +64,13 @@ public class ViewSnakeGame implements Observer, KeyListener {
         catch (Exception exception) {
             System.out.println(exception.getMessage());
         }
-
-        this.controller.getGame().initializeGame();
     }
-
-    public void keyPressed(KeyEvent keyEvent) {
-        switch(keyEvent.getKeyCode()) {
-            case KeyEvent.VK_UP:
-                controller.getGame().getNextMoves().set(0, AgentAction.MOVE_UP);
-                break;
-            case KeyEvent.VK_DOWN:
-                controller.getGame().getNextMoves().set(0, AgentAction.MOVE_DOWN);
-                break;
-            case KeyEvent.VK_LEFT:
-                controller.getGame().getNextMoves().set(0, AgentAction.MOVE_LEFT);
-                break;
-            case KeyEvent.VK_RIGHT:
-                controller.getGame().getNextMoves().set(0, AgentAction.MOVE_RIGHT);
-                break;
-            case KeyEvent.VK_Z:
-                controller.getGame().getNextMoves().set(1, AgentAction.MOVE_UP);
-                break;
-            case KeyEvent.VK_S:
-                controller.getGame().getNextMoves().set(1, AgentAction.MOVE_DOWN);
-                break;
-            case KeyEvent.VK_Q:
-                controller.getGame().getNextMoves().set(1, AgentAction.MOVE_LEFT);
-                break;
-            case KeyEvent.VK_D:
-                controller.getGame().getNextMoves().set(1, AgentAction.MOVE_RIGHT);
-                break;
-        }
-    }
-
-    public void keyTyped(KeyEvent keyEvent) {}
-    public void keyReleased(KeyEvent keyEvent) {}
 
     public void update(Observable observable, Object o) {
-        SnakeGame game = (SnakeGame) observable;
-        this.panelSnakeGame.updateInfoGame(game.getFeaturesSnakes(), game.getFeaturesItems());
+        updateGame(this.panelSnakeGame, (JSONObject) o);
         frame.repaint();
-        frame.requestFocus();
+
+        System.out.println(o);
+        System.out.println(this.panelSnakeGame.featuresSnakes.get(0).getPositions().get(0).getY());
     }
 }
