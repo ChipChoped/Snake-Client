@@ -97,7 +97,7 @@ public class Game {
         return new PanelSnakeGame(width, height, walls, snakes, items);
     }
 
-    public static void updateGame(PanelSnakeGame panelSnakeGame, JSONObject jsonResponse) {
+    public static ArrayList<FeaturesSnake> getSnakes(JSONObject jsonResponse) {
         JSONObject jsonSnake = jsonResponse.getJSONObject("snake");
         JSONArray jsonHead = jsonSnake.getJSONArray("head");
         Position head = new Position(jsonHead.getInt(0), jsonHead.getInt(1));
@@ -125,6 +125,12 @@ public class Game {
                 jsonSnake.getBoolean("isInvincible"), jsonSnake.getBoolean("isSick"));
         ArrayList<FeaturesSnake> snakes = new ArrayList<>();
         snakes.add(snake);
+
+        return snakes;
+    }
+
+    public static void updateGame(PanelSnakeGame panelSnakeGame, JSONObject jsonResponse) {
+        ArrayList<FeaturesSnake> snakes = getSnakes(jsonResponse);
 
         JSONArray jsonItems = jsonResponse.getJSONArray("items");
         ArrayList<FeaturesItem> items = new ArrayList<>();

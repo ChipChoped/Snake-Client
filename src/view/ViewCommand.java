@@ -1,11 +1,13 @@
 package view;
 
 import behaviors.Behaviors;
+import behaviors.InvincibleBehavior;
 import controllers.ControllerSnakeGame;
 import model.SnakeGame;
 import org.json.JSONObject;
 import states.EndState;
 import utils.AgentAction;
+import utils.FeaturesSnake;
 import utils.Snake;
 import utils.User;
 
@@ -162,13 +164,21 @@ public class ViewCommand extends Observable {
         exitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                closeGame();
+                try {
+                    closeGame();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent we) {
-                closeGame();
+                try {
+                    closeGame();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
@@ -220,17 +230,18 @@ public class ViewCommand extends Observable {
         new Test().execute();
     }
 
-    private void closeGame() {
+    private void closeGame() throws IOException {
         System.gc();
 
         for (Window window : Window.getWindows())
             window.dispose();
 
+        pause(socket);
         JSONObject jsonRequest = new JSONObject();
         jsonRequest.put("type", "exit");
         this.out.println(jsonRequest);
 
-        ViewGameMenu viewGameMenu = new ViewGameMenu(this.socket, this.user);
+        ViewGameMenu.frame.setVisible(true);
     }
 
     private void updatePlayerBehavior(Behaviors behavior) {
@@ -247,7 +258,7 @@ public class ViewCommand extends Observable {
         }
     }
 
-    private void updatePlayersLives(ArrayList<Snake> snakes) {
+    private void updatePlayersLives(ArrayList<FeaturesSnake> snakes) {
         boolean snakeAlive = snakes.size() == 1;
 
         if (this.playerAlive) {
@@ -255,7 +266,14 @@ public class ViewCommand extends Observable {
                 this.playerAlive = false;
 
             if (this.playerAlive && snakeAlive) {
-                Behaviors behavior = snakes.get(0).getBehavior().getBehaviorType();
+                Behaviors behavior;
+
+                if (snakes.get(0).isInvincible())
+                    behavior = Behaviors.INVINCIBLE;
+                else if (snakes.get(0).isSick())
+                    behavior = Behaviors.SICK;
+                else
+                    behavior = Behaviors.NORMAL;
 
                 if (behavior != this.playerBehavior) {
                     this.playerBehavior = behavior;
@@ -268,26 +286,27 @@ public class ViewCommand extends Observable {
     public void updateGame(JSONObject jsonResponse) {
         scoreLabel.setText("Score : " + jsonResponse.get("score").toString());
         turnNumberLabel.setText("Turn : " + jsonResponse.get("turn").toString());
+        updatePlayersLives(getSnakes(jsonResponse));
 
         setChanged();
         notifyObservers(jsonResponse);
     }
 
-    public void update(Observable observable, Object o) {
+    /*public void update(Observable observable, Object o) {
         SnakeGame game = (SnakeGame) observable;
         scoreLabel.setText("Score : " + game.getScore());
         turnNumberLabel.setText("Turn : " + game.getTurn());
 
         updatePlayersLives(game.getSnakes());
 
-        if (game.isGameOver()) {
+        *//*if (game.isGameOver()) {
             try {
                 saveGame(this.socket, user.ID(), game.isWon(), game.getScore());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
-    }
+        }*//*
+    }*/
 
     class Test extends SwingWorker {
         @Override
