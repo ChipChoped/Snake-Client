@@ -24,8 +24,9 @@ import static functions.Request.disconnect;
 import static functions.Request.logOut;
 
 public class ViewGameMenu {
+    public static JFrame frame = new JFrame();
+
     public ViewGameMenu(Socket socket, User user) {
-        JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setTitle("Snake Menu");
         frame.setSize(new Dimension(500, 300));

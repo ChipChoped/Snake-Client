@@ -17,11 +17,13 @@ import java.net.Socket;
 import java.util.Observable;
 import java.util.Observer;
 
+import static functions.Game.pause;
 import static functions.Game.updateGame;
 
 public class ViewSnakeGame implements Observer {
+    public static JFrame frame = new JFrame();
+
     private PanelSnakeGame panelSnakeGame;
-    private JFrame frame = new JFrame();
     private AgentAction nextAction;
 
     private BufferedReader in;
@@ -49,12 +51,23 @@ public class ViewSnakeGame implements Observer {
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent we) {
-            System.gc();
+                System.gc();
 
-            for (Window window : Window.getWindows())
-                window.dispose();
+                for (Window window : Window.getWindows())
+                    window.dispose();
 
-            ViewGameMenu viewGameMenu = new ViewGameMenu(socket, user);
+                try {
+                    pause(socket);
+                    PrintStream out = new PrintStream(socket.getOutputStream());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                JSONObject jsonRequest = new JSONObject();
+                jsonRequest.put("type", "exit");
+                out.println(jsonRequest);
+
+                ViewGameMenu.frame.setVisible(true);
             }
         });
 
