@@ -56,29 +56,6 @@ public class Request {
         return jsonResponse;
     }
 
-    public static JSONObject saveGame(Socket socket, int ID, boolean won, int score) throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintStream out = new PrintStream(socket.getOutputStream());
-
-        String type = "";
-        JSONObject jsonResponse = null;
-
-        while (!type.equals("return-save-game") && !type.equals("error")) {
-            JSONObject jsonRequest = new JSONObject();
-            jsonRequest.put("type", "save-game");
-            jsonRequest.put("user-id", ID);
-            jsonRequest.put("won", won);
-            jsonRequest.put("score", score);
-            jsonRequest.put("date", now());
-            out.println(jsonRequest);
-
-            jsonResponse = new JSONObject(in.readLine());
-            type = (String) jsonResponse.get("type");
-        }
-
-        return jsonResponse;
-    }
-
     public static void disconnect(Socket socket) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintStream out = new PrintStream(socket.getOutputStream());
